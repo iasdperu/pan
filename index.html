@@ -1,400 +1,617 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Sistema SIGIS_FED - Registro de Salud</title>
-  <!-- Tailwind CSS CDN para estilos modernos y responsivos -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Iconos Lucide -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    .loader {
-      border-top-color: #2563eb;
-      animation: spinner 0.6s linear infinite;
-    }
-    @keyframes spinner {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
-</head>
-<body class="bg-slate-100 min-h-screen pb-12 font-sans text-slate-800">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAN</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for Ancient Style -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-  <!-- Encabezado -->
-  <header class="bg-blue-700 text-white shadow-lg mb-6">
-    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <i data-lucide="activity" class="w-8 h-8"></i>
-        <div>
-          <h1 class="text-xl font-bold leading-tight">SIGIS_FED - Censo de Salud</h1>
-          <p class="text-xs text-blue-200">Centro de Salud - Captura e Integración</p>
-        </div>
-      </div>
-      <span class="bg-blue-800 text-xs px-2.5 py-1 rounded-full text-blue-100 font-medium">GitHub Edition</span>
-    </div>
-  </header>
-
-  <main class="max-w-4xl mx-auto px-4">
-    <!-- Mensajes de Notificación -->
-    <div id="statusAlert" class="hidden mb-4 p-4 rounded-lg text-sm font-medium transition-all shadow-sm"></div>
-
-    <form id="formCenso" class="bg-white rounded-xl shadow-md p-6 border border-slate-200 space-y-6">
-      
-      <!-- Campo oculto para almacenar el número de fila si se actualiza un registro -->
-      <input type="hidden" id="row" name="row" value="" />
-
-      <!-- SECCIÓN 1: BÚSQUEDA Y DATOS PERSONALES -->
-      <div>
-        <h2 class="text-lg font-semibold text-blue-900 border-b pb-2 mb-4 flex items-center gap-2">
-          <i data-lucide="user" class="w-5 h-5 text-blue-600"></i>
-          Datos de Identificación del Paciente
-        </h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
-          <!-- DNI (Columna A) con búsqueda rápida -->
-          <div class="md:col-span-1">
-            <label for="dni" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              DNI (Columna A) <span class="text-red-500">*</span>
-            </label>
-            <div class="relative flex">
-              <input type="text" id="dni" name="dni" required pattern="[0-9]{8}" maxlength="8"
-                placeholder="8 dígitos"
-                class="w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-base">
-              <button type="button" onclick="buscarDNI()" title="Buscar DNI en sistema"
-                class="absolute right-1 top-1 bottom-1 px-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center justify-center transition">
-                <i data-lucide="search" class="w-4 h-4"></i>
-              </button>
-            </div>
-            <span class="text-[11px] text-slate-500">Presiona buscar o Tab para consultar</span>
-          </div>
-
-          <!-- Apellidos y Nombres (Columna B) -->
-          <div class="md:col-span-2">
-            <label for="nombreB" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Apellidos y Nombres (Columna B) <span class="text-red-500">*</span>
-            </label>
-            <input type="text" id="nombreB" name="nombreB" required placeholder="NOMBRES Y APELLIDOS COMPLETOS"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase">
-          </div>
-
-          <!-- Fecha de Nacimiento (Columna C) -->
-          <div>
-            <label for="fn" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Fecha de Nacimiento (Columna C)
-            </label>
-            <input type="date" id="fn" name="fn"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-          </div>
-
-          <!-- Sexo (Columna D) -->
-          <div>
-            <label for="sexo" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Sexo (Columna D)
-            </label>
-            <select id="sexo" name="sexo"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-              <option value="">-- Seleccionar --</option>
-              <option value="M">MASCULINO</option>
-              <option value="F">FEMENINO</option>
-            </select>
-          </div>
-
-          <!-- Historia Clínica (Columna E) -->
-          <div>
-            <label for="hclinica" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Historia Clínica (Columna E)
-            </label>
-            <input type="text" id="hclinica" name="hclinica" placeholder="Nº de HC"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-          </div>
-
-        </div>
-      </div>
-
-      <!-- SECCIÓN 2: DATOS FAMILIARES Y UBICACIÓN -->
-      <div>
-        <h2 class="text-lg font-semibold text-blue-900 border-b pb-2 mb-4 flex items-center gap-2">
-          <i data-lucide="home" class="w-5 h-5 text-blue-600"></i>
-          Ficha Familiar y Sectorización
-        </h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-          <!-- Ficha Familiar (Columna F) - Validación de 7 DÍGITOS NUMÉRICOS -->
-          <div>
-            <label for="ffamiliar" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Ficha Familiar (Columna F) <span class="text-red-500">*</span>
-            </label>
-            <input type="text" id="ffamiliar" name="ffamiliar" required pattern="[0-9]{7}" maxlength="7"
-              placeholder="7 dígitos exactamente"
-              oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono font-bold text-blue-800">
-            <span class="text-[11px] text-slate-500">Requerido: 7 números exactos</span>
-          </div>
-
-          <!-- Teléfono (Columna G) -->
-          <div>
-            <label for="telefono" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Teléfono (Columna G)
-            </label>
-            <input type="tel" id="telefono" name="telefono" maxlength="9" placeholder="9XXXXXXXX"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-          </div>
-
-          <!-- Estado Civil (Columna H) -->
-          <div>
-            <label for="estado_civil" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Estado Civil (Columna H)
-            </label>
-            <select id="estado_civil" name="estado_civil"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
-              <option value="">-- Seleccionar --</option>
-              <option value="SOLTERO(A)">SOLTERO(A)</option>
-              <option value="CASADO(A)">CASADO(A)</option>
-              <option value="CONVIVIENTE">CONVIVIENTE</option>
-              <option value="DIVORCIADO(A)">DIVORCIADO(A)</option>
-              <option value="VIUDO(A)">VIUDO(A)</option>
-            </select>
-          </div>
-
-          <!-- Sector (Columna I) -->
-          <div>
-            <label for="sector" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Sector (Columna I)
-            </label>
-            <input type="text" id="sector" name="sector" placeholder="Ej: SECTOR 7"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase">
-          </div>
-
-          <!-- Referencia Dirección (Columna J) -->
-          <div class="md:col-span-2">
-            <label for="ref_direccion" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Referencia de Dirección (Columna J)
-            </label>
-            <input type="text" id="ref_direccion" name="ref_direccion" placeholder="Ej: Frente al parque / Av. Principal"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase">
-          </div>
-
-          <!-- Mz (Columna K) -->
-          <div>
-            <label for="mz" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Manzana / Lote (Columna K)
-            </label>
-            <input type="text" id="mz" name="mz" placeholder="Ej: Mz A Lt 5"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase">
-          </div>
-
-          <!-- Georreferencia (Columna L) -->
-          <div class="md:col-span-2">
-            <label for="georeferencia" class="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Georreferencia GPS (Columna L)
-            </label>
-            <div class="flex gap-2">
-              <input type="text" id="georeferencia" name="georeferencia" readonly placeholder="-9.XXXXX, -75.XXXXX"
-                class="w-full px-3 py-2 border border-slate-300 bg-slate-50 rounded-lg outline-none text-slate-600 font-mono text-sm">
-              <button type="button" onclick="obtenerGeolocalizacion()"
-                class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1.5 text-xs font-medium transition whitespace-nowrap">
-                <i data-lucide="map-pin" class="w-4 h-4"></i> Capturar GPS
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- BOTONES DE ACCIÓN -->
-      <div class="pt-4 border-t flex flex-col sm:flex-row gap-3 justify-end">
-        <button type="button" onclick="limpiarFormulario()"
-          class="px-5 py-2.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium rounded-lg transition flex items-center justify-center gap-2">
-          <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Limpiar Formulario
-        </button>
-        
-        <button type="submit" id="btnGuardar"
-          class="px-6 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg shadow-md transition flex items-center justify-center gap-2">
-          <i data-lucide="save" class="w-4 h-4"></i> Guardar Registro
-        </button>
-      </div>
-
-    </form>
-  </main>
-
-  <!-- LÓGICA DE JAVASCRIPT -->
-  <script>
-    // Inicializar iconos de Lucide
-    lucide.createIcons();
-
-    // Endpoint de tu Web App de Google Apps Script
-    const URL_CENSO = "https://script.google.com/macros/s/AKfycbwkYPuO13juZBjhs7wrxX0MEYy-hPeg0HyzjDJ9_Oy-Yq3Fih99wFAyI5xlbJ_u4rBX1g/exec";
-
-    // Manejador del evento Submit del formulario
-    document.getElementById('formCenso').addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      // Validar Ficha Familiar exactamente de 7 dígitos
-      const ffamiliar = document.getElementById('ffamiliar').value;
-      if (!/^\d{7}$/.test(ffamiliar)) {
-        mostrarAlerta("❌ La Ficha Familiar debe contener exactamente 7 dígitos numéricos.", "bg-red-100 text-red-800 border-red-300");
-        return;
-      }
-
-      // Preparar objeto de datos para enviar
-      const formData = {
-        row: document.getElementById('row').value || null,
-        dni: document.getElementById('dni').value.trim(),
-        nombreB: document.getElementById('nombreB').value.trim(),
-        fn: document.getElementById('fn').value,
-        sexo: document.getElementById('sexo').value,
-        hclinica: document.getElementById('hclinica').value.trim(),
-        ffamiliar: ffamiliar.trim(),
-        telefono: document.getElementById('telefono').value.trim(),
-        estado_civil: document.getElementById('estado_civil').value,
-        sector: document.getElementById('sector').value.trim(),
-        ref_direccion: document.getElementById('ref_direccion').value.trim(),
-        mz: document.getElementById('mz').value.trim(),
-        georeferencia: document.getElementById('georeferencia').value.trim() // Columna L
-      };
-
-      const btnGuardar = document.getElementById('btnGuardar');
-      btnGuardar.disabled = true;
-      btnGuardar.innerHTML = `<div class="loader w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Guardando...`;
-
-      try {
-        const response = await fetch(URL_CENSO, {
-          method: 'POST',
-          mode: 'cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(formData)
-        });
-
-        const textResult = await response.text();
-        mostrarAlerta(textResult, "bg-green-100 text-green-800 border-green-300");
-        
-        // Limpiar después de guardar con éxito
-        setTimeout(() => {
-          limpiarFormulario();
-        }, 1500);
-
-      } catch (error) {
-        console.error("Error al guardar:", error);
-        mostrarAlerta("⚠️ No se pudo guardar. Verifica la conexión o la configuración de Google Apps Script.", "bg-red-100 text-red-800 border-red-300");
-      } finally {
-        btnGuardar.disabled = false;
-        btnGuardar.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Guardar Registro`;
-        lucide.createIcons();
-      }
-    });
-
-    // Función para buscar datos por DNI en el Apps Script
-    async function buscarDNI() {
-      const dni = document.getElementById('dni').value.trim();
-      if (!dni || dni.length < 8) {
-        mostrarAlerta("⚠️ Ingrese un DNI válido de 8 dígitos para realizar la búsqueda.", "bg-amber-100 text-amber-800 border-amber-300");
-        return;
-      }
-
-      mostrarAlerta("🔍 Consultando base de datos...", "bg-blue-100 text-blue-800 border-blue-300");
-
-      try {
-        const response = await fetch(`${URL_CENSO}?action=buscar&dni=${encodeURIComponent(dni)}`);
-        const data = await response.json();
-
-        if (data && data.status === "ok") {
-          // Rellenar campos existentes con lo recuperado de la base de datos
-          document.getElementById('row').value = data.row || "";
-          document.getElementById('nombreB').value = data.nombreB || "";
-          
-          // Formatear Fecha (Convertir dd/MM/yyyy a YYYY-MM-DD para el input date)
-          if (data.fn) {
-            const partes = data.fn.split('/');
-            if (partes.length === 3) {
-              document.getElementById('fn').value = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
-            } else {
-              document.getElementById('fn').value = data.fn;
-            }
-          }
-
-          document.getElementById('sexo').value = data.sexo || "";
-          document.getElementById('hclinica').value = data.hclinica || "";
-          document.getElementById('ffamiliar').value = data.ffamiliar || "";
-          document.getElementById('telefono').value = data.telefono || "";
-          document.getElementById('estado_civil').value = data.estado_civil || "";
-          document.getElementById('sector').value = data.sector || "";
-          document.getElementById('ref_direccion').value = data.ref_direccion || "";
-          document.getElementById('mz').value = data.mz || "";
-          
-          if(data.georeferencia) {
-            document.getElementById('georeferencia').value = data.georeferencia;
-          }
-
-          mostrarAlerta(`✅ DNI encontrado en la fila ${data.row}. Puedes actualizar los datos que faltan.`, "bg-green-100 text-green-800 border-green-300");
-        } else {
-          // El DNI no existe aún en la base de datos
-          document.getElementById('row').value = "";
-          const dniActual = document.getElementById('dni').value;
-          
-          // Limpiar el resto de campos manteniendo el DNI
-          limpiarFormulario(false);
-          document.getElementById('dni').value = dniActual;
-          
-          mostrarAlerta("ℹ️ DNI no encontrado. Puedes registrar a esta persona como NUEVO registro.", "bg-blue-100 text-blue-800 border-blue-300");
+    <style>
+        body {
+            font-family: 'Cinzel', serif;
+            background: #120905;
+            min-height: 100vh;
+            user-select: none;
+            overflow-x: hidden;
         }
-      } catch (error) {
-        console.error("Error al buscar DNI:", error);
-        mostrarAlerta("❌ Error al conectar con Google Sheets. Asegúrate de tener permisos o conexión.", "bg-red-100 text-red-800 border-red-300");
-      }
-    }
 
-    // Escuchar pérdida de foco o ENTER en el DNI para autobúsqueda rápida
-    document.getElementById('dni').addEventListener('blur', function() {
-      if (this.value.trim().length === 8 && !document.getElementById('row').value) {
-        buscarDNI();
-      }
-    });
+        .font-ancient {
+            font-family: 'Cinzel Decorative', serif;
+        }
 
-    // Captura de coordenadas GPS
-    function obtenerGeolocalizacion() {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          function(position) {
-            const lat = position.coords.latitude.toFixed(6);
-            const lng = position.coords.longitude.toFixed(6);
-            document.getElementById('georeferencia').value = `${lat}, ${lng}`;
-            mostrarAlerta("📍 Ubicación GPS obtenida correctamente.", "bg-emerald-100 text-emerald-800 border-emerald-300");
-          },
-          function(error) {
-            mostrarAlerta("⚠️ No se pudo obtener la ubicación GPS. Verifica los permisos de tu navegador.", "bg-amber-100 text-amber-800 border-amber-300");
-          },
-          { enableHighAccuracy: true, timeout: 10000 }
-        );
-      } else {
-        mostrarAlerta("❌ Tu navegador no soporta geolocalización.", "bg-red-100 text-red-800 border-red-300");
-      }
-    }
+        /* Parchment Background Texture & Vignette */
+        .parchment-bg {
+            background: 
+                radial-gradient(circle at center, rgba(251, 191, 36, 0.12) 0%, rgba(15, 6, 2, 0.92) 85%),
+                linear-gradient(135deg, #23120a 0%, #3a1c07 40%, #120703 100%);
+            box-shadow: inset 0 0 120px rgba(0,0,0,0.95);
+        }
 
-    // Limpiar todos los campos del formulario
-    function limpiarFormulario(limpiarTodo = true) {
-      document.getElementById('formCenso').reset();
-      document.getElementById('row').value = "";
-      document.getElementById('georeferencia').value = "";
-      if (limpiarTodo) {
-        ocultarAlerta();
-      }
-    }
+        .ancient-border {
+            border: 3px solid #b45309;
+            box-shadow: 0 0 25px rgba(180, 83, 9, 0.35), inset 0 0 30px rgba(0,0,0,0.9);
+        }
 
-    // Auxiliares para mensajes
-    function mostrarAlerta(mensaje, clasesCss) {
-      const alertDiv = document.getElementById('statusAlert');
-      alertDiv.className = `mb-4 p-4 rounded-lg text-sm font-medium transition-all shadow-sm border ${clasesCss}`;
-      alertDiv.innerHTML = mensaje;
-      alertDiv.classList.remove('hidden');
-    }
+        /* Key badges styled like ancient seals/stone */
+        .stone-seal {
+            background: linear-gradient(145deg, #78350f, #451a03);
+            border: 2px solid #f59e0b;
+            box-shadow: 0 6px 0 0 #270e02, 0 10px 20px rgba(0,0,0,0.7);
+            transition: all 0.15s ease-in-out;
+        }
 
-    function ocultarAlerta() {
-      const alertDiv = document.getElementById('statusAlert');
-      alertDiv.classList.add('hidden');
-    }
-  </script>
+        .stone-seal:active, .stone-seal.active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 0 #270e02, 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        /* Dynamic pouring animations */
+        @keyframes tilt-pitcher-pour {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-80px, -40px) rotate(-65deg); }
+            75% { transform: translate(-80px, -40px) rotate(-65deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        @keyframes tilt-sack-pour {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(80px, -40px) rotate(55deg); }
+            75% { transform: translate(80px, -40px) rotate(55deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        @keyframes divine-glow {
+            0%, 100% { opacity: 0.3; transform: scale(0.98); }
+            50% { opacity: 0.9; transform: scale(1.06); filter: drop-shadow(0 0 50px #f59e0b); }
+        }
+
+        @keyframes float-sacred {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1.5deg); }
+        }
+
+        @keyframes bake-miracle {
+            0% { transform: scale(0.1) rotate(-20deg); opacity: 0; filter: brightness(3) blur(15px); }
+            65% { transform: scale(1.12) rotate(2deg); opacity: 1; filter: brightness(1.5) blur(0px); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1); }
+        }
+
+        .animate-tilt-pitcher {
+            animation: tilt-pitcher-pour 2.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        .animate-tilt-sack {
+            animation: tilt-sack-pour 2.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        .animate-sacred-float {
+            animation: float-sacred 4s ease-in-out infinite;
+        }
+
+        .animate-divine {
+            animation: divine-glow 2.8s infinite ease-in-out;
+        }
+
+        .animate-miracle {
+            animation: bake-miracle 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Canvas Overlay */
+        #effectsCanvas {
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="parchment-bg flex flex-col items-center justify-between min-h-screen p-4 md:p-8 text-amber-100 relative">
+
+    <!-- Particle Simulation Canvas -->
+    <canvas id="effectsCanvas"></canvas>
+
+    <!-- Header Section - ONLY "PAN" -->
+    <header class="text-center my-4 sm:my-6 z-10">
+        <h1 class="text-7xl sm:text-8xl md:text-9xl font-black font-ancient text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-400 to-amber-700 tracking-widest drop-shadow-[0_5px_20px_rgba(245,158,11,0.6)]">
+            PAN
+        </h1>
+        <div class="h-1.5 w-36 md:w-56 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto mt-2"></div>
+    </header>
+
+    <!-- Main Visual Stage Area -->
+    <main class="w-full max-w-4xl flex flex-col items-center justify-center my-auto z-10 gap-8">
+        
+        <!-- Sacred Altar Container -->
+        <div class="relative w-full h-80 sm:h-96 md:h-[420px] bg-gradient-to-b from-amber-950/40 via-stone-900/70 to-black/90 rounded-3xl ancient-border flex items-center justify-center p-6 overflow-hidden">
+            
+            <!-- Divine Beam Background -->
+            <div id="divineRay" class="absolute inset-0 bg-gradient-to-t from-amber-500/0 via-amber-400/20 to-amber-200/35 opacity-0 transition-opacity duration-1000"></div>
+
+            <!-- Central Kneading Bowl / Basin -->
+            <div id="centralBasin" class="absolute bottom-8 w-52 h-24 sm:w-64 sm:h-28 bg-gradient-to-b from-amber-950 via-stone-900 to-black rounded-b-[70px] border-t-4 border-amber-600 shadow-[0_20px_40px_rgba(0,0,0,0.95)] flex flex-col items-center justify-start pt-1.5 z-20">
+                <div class="relative w-44 h-7 sm:w-56 sm:h-8 bg-stone-950 rounded-full border border-amber-900/80 shadow-inner overflow-hidden flex items-center justify-center">
+                    
+                    <!-- Accumulated Flour Layer in Bowl -->
+                    <div id="flourAccumulation" class="absolute bottom-0 w-full bg-gradient-to-t from-stone-200 via-amber-50 to-stone-100 rounded-b-full transition-all duration-700 h-0 opacity-90 shadow-[0_-2px_10px_rgba(255,255,255,0.4)]"></div>
+                    
+                    <!-- Accumulated Oil Liquid Layer in Bowl -->
+                    <div id="oilAccumulation" class="absolute inset-0 bg-gradient-to-r from-amber-500/80 via-yellow-400/90 to-amber-600/80 rounded-full transition-all duration-700 opacity-0 scale-y-0 origin-bottom shadow-[inset_0_2px_8px_rgba(255,255,255,0.6)]"></div>
+
+                    <!-- Dough Mixing Texture -->
+                    <div id="doughMix" class="w-0 h-full bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-300 transition-all duration-1000 rounded-full opacity-0"></div>
+                </div>
+            </div>
+
+            <!-- INGREDIENT 1: HARINA (H) - Flour Fabric Sack -->
+            <div id="harinaElement" class="absolute left-6 sm:left-12 md:left-24 top-12 sm:top-16 flex flex-col items-center transition-all duration-700 opacity-40 scale-85 z-30">
+                <div id="sackGraphic" class="relative group cursor-pointer" onclick="triggerHarina()">
+                    <!-- Soft Glow -->
+                    <div class="absolute -inset-3 bg-amber-200/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    
+                    <!-- Ancient Flour Sack -->
+                    <div class="relative w-24 h-32 sm:w-28 sm:h-36 bg-gradient-to-br from-amber-800 via-yellow-900 to-amber-950 border-2 border-amber-600/80 rounded-b-[35px] rounded-t-[18px] shadow-2xl flex flex-col items-center justify-center">
+                        <div class="absolute -top-3 w-16 sm:w-20 h-5 bg-amber-700 border border-amber-500 rounded-full shadow-md"></div>
+                        <div class="w-12 h-2 bg-stone-100 rounded-full -mt-2 blur-[1px]"></div>
+                        <!-- Flour Grain Icon -->
+                        <i class="fa-solid fa-wheat-awn text-3xl sm:text-4xl text-amber-200/90 mt-4 drop-shadow"></i>
+                    </div>
+
+                    <!-- Pouring Spout Marker (Anchor for Particles) -->
+                    <div id="sackSpout" class="absolute top-0 right-0 w-2 h-2"></div>
+                </div>
+            </div>
+
+            <!-- INGREDIENT 2: ACEITE (A) - Terracotta Pitcher (Jarrita de Barro) -->
+            <div id="aceiteElement" class="absolute right-6 sm:right-12 md:right-24 top-12 sm:top-16 flex flex-col items-center transition-all duration-700 opacity-40 scale-85 z-30">
+                <div id="pitcherGraphic" class="relative group cursor-pointer" onclick="triggerAceite()">
+                    <!-- Soft Glow -->
+                    <div class="absolute -inset-3 bg-amber-500/25 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    
+                    <!-- Ancient Terracotta Pitcher SVG -->
+                    <svg class="w-28 h-36 sm:w-32 sm:h-40 drop-shadow-[0_15px_20px_rgba(0,0,0,0.85)]" viewBox="0 0 120 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="clayGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#b45309" />
+                                <stop offset="35%" stop-color="#78350f" />
+                                <stop offset="70%" stop-color="#451a03" />
+                                <stop offset="100%" stop-color="#270e02" />
+                            </linearGradient>
+                            <linearGradient id="clayHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#d97706" stop-opacity="0.85" />
+                                <stop offset="50%" stop-color="#b45309" stop-opacity="0.3" />
+                                <stop offset="100%" stop-color="#270e02" stop-opacity="0.95" />
+                            </linearGradient>
+                        </defs>
+
+                        <!-- Jug Handle -->
+                        <path d="M 42 45 C 10 45, 10 95, 42 105 C 15 95, 18 52, 42 45 Z" fill="url(#clayGradient)" stroke="#270e02" stroke-width="2" />
+                        
+                        <!-- Main Body -->
+                        <path d="M 50 25 
+                                 C 65 22, 85 24, 92 32
+                                 C 98 38, 88 48, 80 52
+                                 C 105 70, 108 110, 85 132
+                                 C 65 148, 40 142, 35 125
+                                 C 30 105, 38 68, 52 52
+                                 C 48 44, 46 32, 50 25 Z" 
+                              fill="url(#clayGradient)" stroke="#1c0a02" stroke-width="2.5" />
+
+                        <path d="M 50 25 
+                                 C 65 22, 85 24, 92 32
+                                 C 98 38, 88 48, 80 52
+                                 C 105 70, 108 110, 85 132
+                                 C 65 148, 40 142, 35 125
+                                 C 30 105, 38 68, 52 52
+                                 C 48 44, 46 32, 50 25 Z" 
+                              fill="url(#clayHighlight)" />
+
+                        <!-- Decorative Terracotta Grooves -->
+                        <path d="M 45 75 Q 65 85 92 78" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" opacity="0.4" />
+                        <path d="M 41 88 Q 65 100 90 92" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" opacity="0.3" />
+
+                        <!-- Spout -->
+                        <ellipse cx="70" cy="25" rx="18" ry="6" fill="#270e02" stroke="#b45309" stroke-width="1.5" />
+                        <ellipse cx="70" cy="25" rx="14" ry="4" fill="#120601" />
+
+                        <!-- Oil Drop at Tip -->
+                        <circle cx="88" cy="30" r="3.5" fill="#fbbf24" class="animate-pulse" />
+                    </svg>
+
+                    <!-- Spout Tip Marker for Liquid Particles -->
+                    <div id="pitcherSpout" class="absolute top-6 left-6 w-2 h-2"></div>
+                </div>
+            </div>
+
+            <!-- MIRACLE RESULT: EL GRAN PAN -->
+            <div id="panElement" class="hidden absolute inset-0 flex flex-col items-center justify-center z-40 bg-black/60 backdrop-blur-xs p-4 rounded-3xl">
+                <div id="breadContainer" class="relative">
+                    <!-- Rays of divine light -->
+                    <div class="absolute -inset-16 bg-gradient-to-r from-amber-500/40 via-yellow-300/50 to-amber-600/40 rounded-full blur-3xl animate-divine"></div>
+
+                    <!-- Giant Ancient Bread Loaf -->
+                    <div class="relative w-64 h-40 sm:w-80 sm:h-52 bg-gradient-to-t from-amber-950 via-amber-800 to-amber-600 rounded-t-[130px] rounded-b-[55px] border-4 border-amber-400 shadow-[0_0_70px_rgba(245,158,11,0.8)] flex items-center justify-center overflow-hidden">
+                        <!-- Rustic surface slashes -->
+                        <div class="absolute top-4 left-14 w-4 h-20 bg-amber-300/35 rounded-full transform -rotate-15 blur-[1px]"></div>
+                        <div class="absolute top-3 left-36 w-4 h-24 bg-amber-300/35 rounded-full transform rotate-2 blur-[1px]"></div>
+                        <div class="absolute top-4 right-14 w-4 h-20 bg-amber-300/35 rounded-full transform rotate-15 blur-[1px]"></div>
+
+                        <!-- Wheat Emblem -->
+                        <i class="fa-solid fa-wheat-awn text-6xl sm:text-7xl text-amber-100/90 drop-shadow-[0_4px_10px_rgba(0,0,0,0.85)]"></i>
+                    </div>
+
+                    <!-- Rising Steam -->
+                    <div class="absolute -top-12 left-1/2 -translate-x-1/2 flex gap-8 text-amber-200/80 text-2xl">
+                        <i class="fa-solid fa-wind animate-bounce" style="animation-duration: 2s; animation-delay: 0s"></i>
+                        <i class="fa-solid fa-wind animate-bounce" style="animation-duration: 2.3s; animation-delay: 0.3s"></i>
+                        <i class="fa-solid fa-wind animate-bounce" style="animation-duration: 1.9s; animation-delay: 0.6s"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Controls (H & A Stone Seals) -->
+        <div class="flex items-center justify-center gap-6 sm:gap-12 w-full">
+            
+            <!-- Seal H (Harina) -->
+            <button id="btnH" onclick="triggerHarina()" class="stone-seal w-24 h-24 sm:w-28 sm:h-28 rounded-full flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-amber-300 transition-all">
+                <span class="text-3xl sm:text-4xl font-black font-ancient text-amber-300 drop-shadow">H</span>
+                <i class="fa-solid fa-wheat-awn text-xs sm:text-sm text-amber-400/80"></i>
+            </button>
+
+            <!-- Reset Button -->
+            <button id="btnReset" onclick="resetMiracle()" class="w-12 h-12 rounded-full bg-stone-900/90 border border-amber-800 text-amber-500 hover:text-amber-300 hover:border-amber-500 transition-all flex items-center justify-center shadow-lg active:scale-95">
+                <i class="fa-solid fa-rotate-right text-lg"></i>
+            </button>
+
+            <!-- Seal A (Aceite) -->
+            <button id="btnA" onclick="triggerAceite()" class="stone-seal w-24 h-24 sm:w-28 sm:h-28 rounded-full flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-amber-300 transition-all">
+                <span class="text-3xl sm:text-4xl font-black font-ancient text-amber-300 drop-shadow">A</span>
+                <svg class="w-5 h-6 text-amber-400/90" viewBox="0 0 100 120" fill="currentColor">
+                    <path d="M 40 20 C 55 18, 70 20, 75 26 C 80 30, 72 38, 65 42 C 85 58, 88 90, 70 108 C 52 120, 32 115, 28 100 C 24 84, 30 55, 42 42 C 38 35, 36 26, 40 20 Z" />
+                    <path d="M 35 38 C 10 38, 10 80, 35 88" fill="none" stroke="currentColor" stroke-width="8" />
+                </svg>
+            </button>
+
+        </div>
+
+    </main>
+
+    <footer class="mb-4 text-center text-amber-700/60 text-xs">
+        <div class="flex justify-center gap-4 text-base">
+            <i class="fa-solid fa-scroll"></i>
+            <i class="fa-solid fa-fire-flame-curved"></i>
+            <i class="fa-solid fa-sun"></i>
+        </div>
+    </footer>
+
+    <script>
+        let hasH = false;
+        let hasA = false;
+        let isDone = false;
+
+        // Web Audio API Synthesizer
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioContext = null;
+
+        function getAudioContext() {
+            if (!audioContext) {
+                audioContext = new AudioCtx();
+            }
+            return audioContext;
+        }
+
+        function playSound(type) {
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+
+                if (type === 'flour') {
+                    // Dust sound effect
+                    const bufferSize = ctx.sampleRate * 0.5;
+                    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    const noise = ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(400, now);
+                    filter.frequency.linearRampToValueAtTime(150, now + 0.5);
+
+                    const gain = ctx.createGain();
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(ctx.destination);
+                    noise.start(now);
+                } else if (type === 'oil') {
+                    // Liquid trickle synth
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(640, now + 0.6);
+                    gain.connect(ctx.destination);
+                    osc.connect(gain);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                } else if (type === 'miracle') {
+                    // Chimes chord
+                    const chord = [220, 277.18, 329.63, 440, 554.37, 659.25];
+                    chord.forEach((freq, idx) => {
+                        const o = ctx.createOscillator();
+                        const g = ctx.createGain();
+                        o.type = 'triangle';
+                        o.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        g.connect(ctx.destination);
+                        g.gain.setValueAtTime(0.2, now + idx * 0.08);
+                        g.gain.exponentialRampToValueAtTime(0.0001, now + 3.0);
+                        o.start(now + idx * 0.08);
+                        o.stop(now + 3.0);
+                    });
+                }
+            } catch (e) {
+                console.log(e);
+            }
+        }
+
+        // Particle Canvas logic
+        const canvas = document.getElementById('effectsCanvas');
+        const canvasCtx = canvas.getContext('2d');
+        let activeParticles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Particles for Flour Dust (H)
+        class FlourDustParticle {
+            constructor(startX, startY, targetX, targetY) {
+                this.x = startX + (Math.random() - 0.5) * 20;
+                this.y = startY + (Math.random() - 0.5) * 10;
+                this.targetX = targetX + (Math.random() - 0.5) * 40;
+                this.targetY = targetY;
+                this.size = Math.random() * 4 + 2;
+                this.speedY = Math.random() * 4 + 3;
+                this.speedX = (this.targetX - this.x) * 0.015;
+                this.opacity = Math.random() * 0.7 + 0.3;
+                this.color = ['#ffffff', '#fef3c7', '#fde68a', '#f3f4f6'][Math.floor(Math.random() * 4)];
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX + (Math.random() - 0.5) * 1.5;
+                this.opacity -= 0.008;
+            }
+
+            draw() {
+                canvasCtx.save();
+                canvasCtx.globalAlpha = Math.max(0, this.opacity);
+                canvasCtx.fillStyle = this.color;
+                canvasCtx.beginPath();
+                canvasCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                canvasCtx.fill();
+                canvasCtx.restore();
+            }
+        }
+
+        // Particles for Liquid Oil Stream (A)
+        class OilStreamParticle {
+            constructor(startX, startY, targetX, targetY) {
+                this.x = startX + (Math.random() - 0.5) * 6;
+                this.y = startY;
+                this.targetX = targetX + (Math.random() - 0.5) * 20;
+                this.targetY = targetY;
+                this.size = Math.random() * 3.5 + 2.5;
+                this.speedY = Math.random() * 6 + 5;
+                this.speedX = (this.targetX - this.x) * 0.02;
+                this.opacity = 0.9;
+                this.color = ['#fbbf24', '#f59e0b', '#d97706', '#fef08a'][Math.floor(Math.random() * 4)];
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.opacity -= 0.012;
+            }
+
+            draw() {
+                canvasCtx.save();
+                canvasCtx.globalAlpha = Math.max(0, this.opacity);
+                canvasCtx.fillStyle = this.color;
+                canvasCtx.shadowColor = '#f59e0b';
+                canvasCtx.shadowBlur = 6;
+                canvasCtx.beginPath();
+                canvasCtx.ellipse(this.x, this.y, this.size * 0.7, this.size * 1.8, 0, 0, Math.PI * 2);
+                canvasCtx.fill();
+                canvasCtx.restore();
+            }
+        }
+
+        function spawnFlourCascade() {
+            const bowl = document.getElementById('centralBasin').getBoundingClientRect();
+            const sack = document.getElementById('sackGraphic').getBoundingClientRect();
+            
+            const startX = sack.left + sack.width * 0.8;
+            const startY = sack.top + sack.height * 0.3;
+            const targetX = bowl.left + bowl.width * 0.5;
+            const targetY = bowl.top + 20;
+
+            let count = 0;
+            const interval = setInterval(() => {
+                for (let i = 0; i < 8; i++) {
+                    activeParticles.push(new FlourDustParticle(startX, startY, targetX, targetY));
+                }
+                count++;
+                if (count > 35) clearInterval(interval);
+            }, 40);
+        }
+
+        function spawnOilStream() {
+            const bowl = document.getElementById('centralBasin').getBoundingClientRect();
+            const pitcher = document.getElementById('pitcherGraphic').getBoundingClientRect();
+
+            const startX = pitcher.left + pitcher.width * 0.2;
+            const startY = pitcher.top + pitcher.height * 0.3;
+            const targetX = bowl.left + bowl.width * 0.5;
+            const targetY = bowl.top + 20;
+
+            let count = 0;
+            const interval = setInterval(() => {
+                for (let i = 0; i < 7; i++) {
+                    activeParticles.push(new OilStreamParticle(startX, startY, targetX, targetY));
+                }
+                count++;
+                if (count > 35) clearInterval(interval);
+            }, 40);
+        }
+
+        function renderParticles() {
+            canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+            activeParticles = activeParticles.filter(p => p.opacity > 0 && p.y < window.innerHeight);
+            activeParticles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(renderParticles);
+        }
+        renderParticles();
+
+        function triggerHarina() {
+            if (isDone) return;
+            hasH = true;
+            playSound('flour');
+
+            const btn = document.getElementById('btnH');
+            btn.classList.add('active');
+            setTimeout(() => btn.classList.remove('active'), 200);
+
+            const harinaEl = document.getElementById('harinaElement');
+            harinaEl.classList.remove('opacity-40', 'scale-85');
+            harinaEl.classList.add('opacity-100', 'scale-100', 'animate-tilt-sack');
+
+            setTimeout(() => {
+                spawnFlourCascade();
+                document.getElementById('flourAccumulation').style.height = '100%';
+            }, 400);
+
+            setTimeout(() => {
+                harinaEl.classList.remove('animate-tilt-sack');
+                harinaEl.classList.add('animate-sacred-float');
+            }, 2800);
+
+            checkMiracle();
+        }
+
+        function triggerAceite() {
+            if (isDone) return;
+            hasA = true;
+            playSound('oil');
+
+            const btn = document.getElementById('btnA');
+            btn.classList.add('active');
+            setTimeout(() => btn.classList.remove('active'), 200);
+
+            const aceiteEl = document.getElementById('aceiteElement');
+            aceiteEl.classList.remove('opacity-40', 'scale-85');
+            aceiteEl.classList.add('opacity-100', 'scale-100', 'animate-tilt-pitcher');
+
+            setTimeout(() => {
+                spawnOilStream();
+                const oilAcc = document.getElementById('oilAccumulation');
+                oilAcc.style.opacity = '1';
+                oilAcc.style.transform = 'scaleY(1)';
+            }, 400);
+
+            setTimeout(() => {
+                aceiteEl.classList.remove('animate-tilt-pitcher');
+                aceiteEl.classList.add('animate-sacred-float');
+            }, 2800);
+
+            checkMiracle();
+        }
+
+        function checkMiracle() {
+            if (hasH && hasA && !isDone) {
+                isDone = true;
+
+                setTimeout(() => {
+                    const mix = document.getElementById('doughMix');
+                    mix.style.opacity = '1';
+                    mix.style.width = '100%';
+
+                    playSound('miracle');
+
+                    // Divine Rays & Transformation
+                    document.getElementById('divineRay').style.opacity = '1';
+
+                    const panEl = document.getElementById('panElement');
+                    const breadContainer = document.getElementById('breadContainer');
+                    
+                    panEl.classList.remove('hidden');
+                    breadContainer.classList.add('animate-miracle');
+
+                    // Golden Confetti Burst
+                    confetti({
+                        particleCount: 180,
+                        spread: 120,
+                        origin: { y: 0.52 },
+                        colors: ['#f59e0b', '#fbbf24', '#d97706', '#fef3c7', '#78350f']
+                    });
+                }, 1600);
+            }
+        }
+
+        function resetMiracle() {
+            hasH = false;
+            hasA = false;
+            isDone = false;
+
+            document.getElementById('harinaElement').className = 'absolute left-6 sm:left-12 md:left-24 top-12 sm:top-16 flex flex-col items-center transition-all duration-700 opacity-40 scale-85 z-30';
+            document.getElementById('aceiteElement').className = 'absolute right-6 sm:right-12 md:right-24 top-12 sm:top-16 flex flex-col items-center transition-all duration-700 opacity-40 scale-85 z-30';
+            
+            document.getElementById('flourAccumulation').style.height = '0';
+            const oilAcc = document.getElementById('oilAccumulation');
+            oilAcc.style.opacity = '0';
+            oilAcc.style.transform = 'scaleY(0)';
+
+            const mix = document.getElementById('doughMix');
+            mix.style.opacity = '0';
+            mix.style.width = '0%';
+
+            document.getElementById('panElement').classList.add('hidden');
+            document.getElementById('breadContainer').classList.remove('animate-miracle');
+            document.getElementById('divineRay').style.opacity = '0';
+        }
+
+        // Keyboard Event Listeners [H], [A], [R]
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            if (k === 'h') triggerHarina();
+            if (k === 'a') triggerAceite();
+            if (k === 'r') resetMiracle();
+        });
+    </script>
 </body>
 </html>
