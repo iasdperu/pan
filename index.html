@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistema SIGIS_FED - Registro de Salud</title>
+  <!-- Tailwind CSS CDN para estilos modernos y responsivos -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Iconos Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .loader {
+      border-top-color: #2563eb;
+      animation: spinner 0.6s linear infinite;
+    }
+    @keyframes spinner {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen pb-12 font-sans text-slate-800">
+
+  <!-- Encabezado -->
+  <header class="bg-blue-700 text-white shadow-lg mb-6">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <i data-lucide="activity" class="w-8 h-8"></i>
+        <div>
+          <h1 class="text-xl font-bold leading-tight">SIGIS_FED - Censo de Salud</h1>
+          <p class="text-xs text-blue-200">Centro de Salud - Captura e Integración</p>
+        </div>
+      </div>
+      <span class="bg-blue-800 text-xs px-2.5 py-1 rounded-full text-blue-100 font-medium">GitHub Edition</span>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4">
+    <!-- Mensajes de Notificación -->
+    <div id="statusAlert" class="hidden mb-4 p-4 rounded-lg text-sm font-medium transition-all shadow-sm"></div>
+
+    <form id="formCenso" class="bg-white rounded-xl shadow-md p-6 border border-slate-200 space-y-6">
+      
+      <!-- Campo oculto para almacenar el número de fila si se actualiza un registro -->
+      <input type="hidden" id="row" name="row" value="" />
+
+      <!-- SECCIÓN 1: BÚSQUEDA Y DATOS PERSONALES -->
+      <div>
+        <h2 class="text-lg font-semibold text-blue-900 border-b pb-2 mb-4 flex items-center gap-2">
+          <i data-lucide="user" class="w-5 h-5 text-blue-600"></i>
+          Datos de Identificación del Paciente
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <!-- DNI (Columna A) con búsqueda rápida -->
+          <div class="md:col-span-1">
+            <label for="dni" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              DNI (Columna A) <span class="text-red-500">*</span>
+            </label>
+            <div class="relative flex">
+              <input type="text" id="dni" name="dni" required pattern="[0-9]{8}" maxlength="8"
+                placeholder="8 dígitos"
+                class="w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-base">
+              <button type="button" onclick="buscarDNI()" title="Buscar DNI en sistema"
+                class="absolute right-1 top-1 bottom-1 px-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center justify-center transition">
+                <i data-lucide="search" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <span class="text-[11px] text-slate-500">Presiona buscar o Tab para consultar</span>
+          </div>
+
+          <!-- Apellidos y Nombres (Columna B) -->
+          <div class="md:col-span-2">
+            <label for="nombreB" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Apellidos y Nombres (Columna B) <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="nombreB" name="nombreB" required placeholder="NOMBRES Y APELLIDOS COMPLETOS"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase">
+          </div>
+
+          <!-- Fecha de Nacimiento (Columna C) -->
+          <div>
+            <label for="fn" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Fecha de Nacimiento (Columna C)
+            </label>
+            <input type="date" id="fn" name="fn"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+          </div>
+
+          <!-- Sexo (Columna D) -->
+          <div>
+            <label for="sexo" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Sexo (Columna D)
+            </label>
+            <select id="sexo" name="sexo"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              <option value="">-- Seleccionar --</option>
+              <option value="M">MASCULINO</option>
+              <option value="F">FEMENINO</option>
+            </select>
+          </div>
+
+          <!-- Historia Clínica (Columna E) -->
+          <div>
+            <label for="hclinica" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Historia Clínica (Columna E)
+            </label>
+            <input type="text" id="hclinica" name="hclinica" placeholder="Nº de HC"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SECCIÓN 2: DATOS FAMILIARES Y UBICACIÓN -->
+      <div>
+        <h2 class="text-lg font-semibold text-blue-900 border-b pb-2 mb-4 flex items-center gap-2">
+          <i data-lucide="home" class="w-5 h-5 text-blue-600"></i>
+          Ficha Familiar y Sectorización
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <!-- Ficha Familiar (Columna F) - Validación de 7 DÍGITOS NUMÉRICOS -->
+          <div>
+            <label for="ffamiliar" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Ficha Familiar (Columna F) <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="ffamiliar" name="ffamiliar" required pattern="[0-9]{7}" maxlength="7"
+              placeholder="7 dígitos exactamente"
+              oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono font-bold text-blue-800">
+            <span class="text-[11px] text-slate-500">Requerido: 7 números exactos</span>
+          </div>
+
+          <!-- Teléfono (Columna G) -->
+          <div>
+            <label for="telefono" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Teléfono (Columna G)
+            </label>
+            <input type="tel" id="telefono" name="telefono" maxlength="9" placeholder="9XXXXXXXX"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+          </div>
+
+          <!-- Estado Civil (Columna H) -->
+          <div>
+            <label for="estado_civil" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Estado Civil (Columna H)
+            </label>
+            <select id="estado_civil" name="estado_civil"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+              <option value="">-- Seleccionar --</option>
+              <option value="SOLTERO(A)">SOLTERO(A)</option>
+              <option value="CASADO(A)">CASADO(A)</option>
+              <option value="CONVIVIENTE">CONVIVIENTE</option>
+              <option value="DIVORCIADO(A)">DIVORCIADO(A)</option>
+              <option value="VIUDO(A)">VIUDO(A)</option>
+            </select>
+          </div>
+
+          <!-- Sector (Columna I) -->
+          <div>
+            <label for="sector" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Sector (Columna I)
+            </label>
+            <input type="text" id="sector" name="sector" placeholder="Ej: SECTOR 7"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase">
+          </div>
+
+          <!-- Referencia Dirección (Columna J) -->
+          <div class="md:col-span-2">
+            <label for="ref_direccion" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Referencia de Dirección (Columna J)
+            </label>
+            <input type="text" id="ref_direccion" name="ref_direccion" placeholder="Ej: Frente al parque / Av. Principal"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase">
+          </div>
+
+          <!-- Mz (Columna K) -->
+          <div>
+            <label for="mz" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Manzana / Lote (Columna K)
+            </label>
+            <input type="text" id="mz" name="mz" placeholder="Ej: Mz A Lt 5"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase">
+          </div>
+
+          <!-- Georreferencia (Columna L) -->
+          <div class="md:col-span-2">
+            <label for="georeferencia" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+              Georreferencia GPS (Columna L)
+            </label>
+            <div class="flex gap-2">
+              <input type="text" id="georeferencia" name="georeferencia" readonly placeholder="-9.XXXXX, -75.XXXXX"
+                class="w-full px-3 py-2 border border-slate-300 bg-slate-50 rounded-lg outline-none text-slate-600 font-mono text-sm">
+              <button type="button" onclick="obtenerGeolocalizacion()"
+                class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1.5 text-xs font-medium transition whitespace-nowrap">
+                <i data-lucide="map-pin" class="w-4 h-4"></i> Capturar GPS
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- BOTONES DE ACCIÓN -->
+      <div class="pt-4 border-t flex flex-col sm:flex-row gap-3 justify-end">
+        <button type="button" onclick="limpiarFormulario()"
+          class="px-5 py-2.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium rounded-lg transition flex items-center justify-center gap-2">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Limpiar Formulario
+        </button>
+        
+        <button type="submit" id="btnGuardar"
+          class="px-6 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg shadow-md transition flex items-center justify-center gap-2">
+          <i data-lucide="save" class="w-4 h-4"></i> Guardar Registro
+        </button>
+      </div>
+
+    </form>
+  </main>
+
+  <!-- LÓGICA DE JAVASCRIPT -->
+  <script>
+    // Inicializar iconos de Lucide
+    lucide.createIcons();
+
+    // Endpoint de tu Web App de Google Apps Script
+    const URL_CENSO = "https://script.google.com/macros/s/AKfycbwkYPuO13juZBjhs7wrxX0MEYy-hPeg0HyzjDJ9_Oy-Yq3Fih99wFAyI5xlbJ_u4rBX1g/exec";
+
+    // Manejador del evento Submit del formulario
+    document.getElementById('formCenso').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      // Validar Ficha Familiar exactamente de 7 dígitos
+      const ffamiliar = document.getElementById('ffamiliar').value;
+      if (!/^\d{7}$/.test(ffamiliar)) {
+        mostrarAlerta("❌ La Ficha Familiar debe contener exactamente 7 dígitos numéricos.", "bg-red-100 text-red-800 border-red-300");
+        return;
+      }
+
+      // Preparar objeto de datos para enviar
+      const formData = {
+        row: document.getElementById('row').value || null,
+        dni: document.getElementById('dni').value.trim(),
+        nombreB: document.getElementById('nombreB').value.trim(),
+        fn: document.getElementById('fn').value,
+        sexo: document.getElementById('sexo').value,
+        hclinica: document.getElementById('hclinica').value.trim(),
+        ffamiliar: ffamiliar.trim(),
+        telefono: document.getElementById('telefono').value.trim(),
+        estado_civil: document.getElementById('estado_civil').value,
+        sector: document.getElementById('sector').value.trim(),
+        ref_direccion: document.getElementById('ref_direccion').value.trim(),
+        mz: document.getElementById('mz').value.trim(),
+        georeferencia: document.getElementById('georeferencia').value.trim() // Columna L
+      };
+
+      const btnGuardar = document.getElementById('btnGuardar');
+      btnGuardar.disabled = true;
+      btnGuardar.innerHTML = `<div class="loader w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Guardando...`;
+
+      try {
+        const response = await fetch(URL_CENSO, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(formData)
+        });
+
+        const textResult = await response.text();
+        mostrarAlerta(textResult, "bg-green-100 text-green-800 border-green-300");
+        
+        // Limpiar después de guardar con éxito
+        setTimeout(() => {
+          limpiarFormulario();
+        }, 1500);
+
+      } catch (error) {
+        console.error("Error al guardar:", error);
+        mostrarAlerta("⚠️ No se pudo guardar. Verifica la conexión o la configuración de Google Apps Script.", "bg-red-100 text-red-800 border-red-300");
+      } finally {
+        btnGuardar.disabled = false;
+        btnGuardar.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Guardar Registro`;
+        lucide.createIcons();
+      }
+    });
+
+    // Función para buscar datos por DNI en el Apps Script
+    async function buscarDNI() {
+      const dni = document.getElementById('dni').value.trim();
+      if (!dni || dni.length < 8) {
+        mostrarAlerta("⚠️ Ingrese un DNI válido de 8 dígitos para realizar la búsqueda.", "bg-amber-100 text-amber-800 border-amber-300");
+        return;
+      }
+
+      mostrarAlerta("🔍 Consultando base de datos...", "bg-blue-100 text-blue-800 border-blue-300");
+
+      try {
+        const response = await fetch(`${URL_CENSO}?action=buscar&dni=${encodeURIComponent(dni)}`);
+        const data = await response.json();
+
+        if (data && data.status === "ok") {
+          // Rellenar campos existentes con lo recuperado de la base de datos
+          document.getElementById('row').value = data.row || "";
+          document.getElementById('nombreB').value = data.nombreB || "";
+          
+          // Formatear Fecha (Convertir dd/MM/yyyy a YYYY-MM-DD para el input date)
+          if (data.fn) {
+            const partes = data.fn.split('/');
+            if (partes.length === 3) {
+              document.getElementById('fn').value = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+            } else {
+              document.getElementById('fn').value = data.fn;
+            }
+          }
+
+          document.getElementById('sexo').value = data.sexo || "";
+          document.getElementById('hclinica').value = data.hclinica || "";
+          document.getElementById('ffamiliar').value = data.ffamiliar || "";
+          document.getElementById('telefono').value = data.telefono || "";
+          document.getElementById('estado_civil').value = data.estado_civil || "";
+          document.getElementById('sector').value = data.sector || "";
+          document.getElementById('ref_direccion').value = data.ref_direccion || "";
+          document.getElementById('mz').value = data.mz || "";
+          
+          if(data.georeferencia) {
+            document.getElementById('georeferencia').value = data.georeferencia;
+          }
+
+          mostrarAlerta(`✅ DNI encontrado en la fila ${data.row}. Puedes actualizar los datos que faltan.`, "bg-green-100 text-green-800 border-green-300");
+        } else {
+          // El DNI no existe aún en la base de datos
+          document.getElementById('row').value = "";
+          const dniActual = document.getElementById('dni').value;
+          
+          // Limpiar el resto de campos manteniendo el DNI
+          limpiarFormulario(false);
+          document.getElementById('dni').value = dniActual;
+          
+          mostrarAlerta("ℹ️ DNI no encontrado. Puedes registrar a esta persona como NUEVO registro.", "bg-blue-100 text-blue-800 border-blue-300");
+        }
+      } catch (error) {
+        console.error("Error al buscar DNI:", error);
+        mostrarAlerta("❌ Error al conectar con Google Sheets. Asegúrate de tener permisos o conexión.", "bg-red-100 text-red-800 border-red-300");
+      }
+    }
+
+    // Escuchar pérdida de foco o ENTER en el DNI para autobúsqueda rápida
+    document.getElementById('dni').addEventListener('blur', function() {
+      if (this.value.trim().length === 8 && !document.getElementById('row').value) {
+        buscarDNI();
+      }
+    });
+
+    // Captura de coordenadas GPS
+    function obtenerGeolocalizacion() {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            const lat = position.coords.latitude.toFixed(6);
+            const lng = position.coords.longitude.toFixed(6);
+            document.getElementById('georeferencia').value = `${lat}, ${lng}`;
+            mostrarAlerta("📍 Ubicación GPS obtenida correctamente.", "bg-emerald-100 text-emerald-800 border-emerald-300");
+          },
+          function(error) {
+            mostrarAlerta("⚠️ No se pudo obtener la ubicación GPS. Verifica los permisos de tu navegador.", "bg-amber-100 text-amber-800 border-amber-300");
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      } else {
+        mostrarAlerta("❌ Tu navegador no soporta geolocalización.", "bg-red-100 text-red-800 border-red-300");
+      }
+    }
+
+    // Limpiar todos los campos del formulario
+    function limpiarFormulario(limpiarTodo = true) {
+      document.getElementById('formCenso').reset();
+      document.getElementById('row').value = "";
+      document.getElementById('georeferencia').value = "";
+      if (limpiarTodo) {
+        ocultarAlerta();
+      }
+    }
+
+    // Auxiliares para mensajes
+    function mostrarAlerta(mensaje, clasesCss) {
+      const alertDiv = document.getElementById('statusAlert');
+      alertDiv.className = `mb-4 p-4 rounded-lg text-sm font-medium transition-all shadow-sm border ${clasesCss}`;
+      alertDiv.innerHTML = mensaje;
+      alertDiv.classList.remove('hidden');
+    }
+
+    function ocultarAlerta() {
+      const alertDiv = document.getElementById('statusAlert');
+      alertDiv.classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
